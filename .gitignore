@@ -1,0 +1,30 @@
+# PlatformIO and ESP-IDF generated files
+.pio/
+.cache/
+compile_commands.json
+sdkconfig.sticky-*
+build/
+dist/
+sdkconfig
+sdkconfig.old
+managed_components/
+
+# Local environment and sensitive files
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+*.p12
+*.pfx
+
+# IDE and operating-system files
+.vscode/
+.idea/
+.DS_Store
+
+# Logs and temporary files
+*.log
+*.tmp
+*.bak
+.trash/

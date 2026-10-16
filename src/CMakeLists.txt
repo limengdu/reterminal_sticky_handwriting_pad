@@ -1,0 +1,38 @@
+idf_component_register(
+    SRCS
+        "main.cpp"
+        "board/board_charger.cpp"
+        "board/board_power.cpp"
+        "board/board_shared_spi.cpp"
+        "core/app_log.cpp"
+        "display/sticky_display.cpp"
+        "handwrite/handwrite_app.cpp"
+        "handwrite/handwrite_brush.cpp"
+        "handwrite/handwrite_history.cpp"
+        "handwrite/handwrite_storage.cpp"
+        "input/sticky_button.cpp"
+        "input/sticky_touch.cpp"
+        "input/sticky_touch_recovery_policy.cpp"
+        "ui/canvas.cpp"
+        "ui/font.cpp"
+    INCLUDE_DIRS
+        "."
+        "board"
+        "core"
+        "display"
+        "handwrite"
+        "input"
+        "ui"
+    REQUIRES
+        esp_driver_gpio
+        esp_driver_i2c
+        esp_driver_spi
+        esp_hw_support
+        esp_partition
+        esp_timer
+        button
+        gt911
+        seeed_epaper
+)
+
+target_compile_features(${COMPONENT_LIB} PRIVATE cxx_std_17)
