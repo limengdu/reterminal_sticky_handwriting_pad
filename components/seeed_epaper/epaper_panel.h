@@ -23,6 +23,7 @@ typedef enum {
     SEEED_EPAPER_PANEL_SSD1677,
     SEEED_EPAPER_PANEL_SSD2677,
     // Probe 0x70: ID 0x07 selects SSD2677; other IDs select SSD1677.
+    // Sticky uses half-duplex 3-wire SDA reads at <= 2.5 MHz.
     SEEED_EPAPER_PANEL_STICKY_AUTO,
 } seeed_epaper_panel_model_t;
 

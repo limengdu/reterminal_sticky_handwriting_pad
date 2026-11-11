@@ -23,9 +23,11 @@
 #define PCF8563_I2C_ADDR 0x51
 #define LSM6DS3_I2C_ADDR 0x6A
 
-// SSD1677 e-paper panel on SPI2 / SPI2总线上的SSD1677电子纸屏幕
+// E-paper panel on SPI2 / SPI2总线上的电子纸屏幕
 #define PIN_EPD_MOSI 14
 #define PIN_EPD_CLK 13
+// GPIO12 is SD MISO; the panel reads and writes SDA on GPIO14.
+// GPIO12 用于 SD MISO；屏幕通过 GPIO14 双向读写 SDA。
 #define PIN_EPD_MISO 12
 #define PIN_EPD_CS 15
 #define PIN_EPD_DC 16

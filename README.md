@@ -29,7 +29,7 @@ The firmware runs locally on the device. A network connection, account, and exte
 
 One firmware supports both Sticky screen revisions. At boot, the display driver resets the panel, sends command `0x70`, and selects SSD2677 for ID `0x07`; any other successful ID read selects the legacy SSD1677 path, matching the supplied Seeed reference. A failed SPI transaction stops initialization instead of silently choosing a controller. The serial log prints the detected controller.
 
-SSD2677 uses its own low-active BUSY signal, 30-second timeout, temperature-selected waveforms, and full-frame two-bit transfers for monochrome, partial, and four-gray refreshes. Both revisions retain the notebook's grayscale/dither baseline and idle power-off behavior. SPI is half-duplex at a conservative 10 MHz using the board's existing separate MISO pin. An all-zero/all-one ID cannot prove that read wiring works, so verify detection on each physical revision.
+SSD2677 uses its own low-active BUSY signal, 30-second timeout, temperature-selected waveforms, and full-frame two-bit transfers for monochrome, partial, and four-gray refreshes. Both revisions retain the notebook's grayscale/dither baseline and idle power-off behavior. SPI uses half-duplex 3-wire mode at 2 MHz. Panel reads and writes share SDA on GPIO14; GPIO12 remains available for SD-card MISO. The clock is within the SSD2677 read limit of 2.5 MHz. An all-zero/all-one ID cannot prove that read wiring works, so verify detection on each physical revision.
 
 The existing SSD1677 driver, portrait orientation, note/history formats, and partitions are unchanged. Save before upgrading and avoid a full-flash erase if keeping saved notes. Erasing flash deletes the notebook.
 

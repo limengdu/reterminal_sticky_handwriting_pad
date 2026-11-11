@@ -1,4 +1,5 @@
 #include "sticky_display.h"
+#include "sticky_display_spi_config.h"
 
 #include <cstring>
 #include <new>
@@ -21,7 +22,6 @@ constexpr char kTag[] = "sticky_display";
 constexpr size_t kFramebufferStride = kStickyDisplayWidth / 4U;
 constexpr size_t kFramebufferSize = kFramebufferStride * kStickyDisplayHeight;
 constexpr size_t kMonochromeStride = kStickyDisplayWidth / 8U;
-constexpr int kSpiClockHz = 10 * 1000 * 1000;
 
 seeed_epaper_panel_handle_t s_panel = nullptr;
 spi_device_handle_t s_spi_device = nullptr;
@@ -171,20 +171,14 @@ esp_err_t sticky_display_init()
                 PIN_EPD_MISO,
                 PIN_EPD_CLK);
 
-    spi_device_interface_config_t device_config = {};
-    // Conservative clock for both revisions; RX-only probe/temperature reads
-    // require half-duplex mode with the existing separate MISO pin.
-    device_config.flags = SPI_DEVICE_HALFDUPLEX;
-    device_config.clock_speed_hz = kSpiClockHz;
-    device_config.mode = 0;
-    device_config.spics_io_num = PIN_EPD_CS;
-    device_config.queue_size = 1;
+    const spi_device_interface_config_t device_config = sticky_display_spi_device_config();
     ESP_RETURN_ON_ERROR(spi_bus_add_device(SPI2_HOST, &device_config, &s_spi_device),
                         "sticky_display", "add display to SPI2");
-    STICKY_LOGD(kTag,
-                "display=spi_device_ready cs=%d clock_hz=%d mode=0 result=ok",
+    STICKY_LOGI(kTag,
+                "display=spi_device_ready cs=%d clock_hz=%d data_io=%d mode=0 half_duplex=1 result=ok",
                 PIN_EPD_CS,
-                device_config.clock_speed_hz);
+                device_config.clock_speed_hz,
+                PIN_EPD_MOSI);
 
     seeed_epaper_panel_config_t panel_config = {};
     panel_config.spi_handle = s_spi_device;

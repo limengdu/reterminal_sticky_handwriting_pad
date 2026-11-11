@@ -47,7 +47,7 @@ pio device monitor
 ## 实现要点
 
 - `src/input/sticky_touch.cpp`：10 ms 轮询 GT911，输出 Down/Move/Up 采样流，队列容量 1024，屏幕刷新期间不会丢点。GT911"数据未就绪"不再当作抬笔；短于 40 ms 的断触会被桥接成同一笔，单次 I2C 失败也不会断笔。
-- 局刷耗时：串口会打印 `display=refresh_partial convert_ms=… write_ms=… waveform_ms=…`。SPI 时钟为 10 MHz（`kSpiClockHz`），用于兼容两种控制器。
+- 局刷耗时：串口会打印 `display=refresh_partial convert_ms=… write_ms=… waveform_ms=…`。SPI 时钟为 2 MHz（`sticky_display_spi_device_config()`），用于兼容两种控制器。
 - `src/handwrite/handwrite_app.cpp`：负责页面、工具栏、按键和触摸事件；画笔效果由 `handwrite_brush.cpp` 绘制。有新笔迹时局刷，页面切换和灰度显示使用全刷。每页在 PSRAM 中保留一份 2bpp 画布（约 94 KB/页）。
 - `src/board/pin_config.h` 定义侧键、AI 键、屏幕和触摸控制器的引脚。
 - 笔迹在进入睡眠时保存；断电前单击 AI 键，等月亮图标出现、设备进入睡眠后再断电。
@@ -58,7 +58,7 @@ pio device monitor
 
 同一份固件兼容两种 Sticky 屏幕。启动时复位屏幕并发送 `0x70`：读到 `0x07` 选择 SSD2677，其余成功读出的值选择 SSD1677，与提供的 Seeed 参考代码一致。SPI 读取失败会直接报告初始化错误，不会当作旧屏处理。串口日志输出实际选择的控制器。
 
-SSD2677 使用独立驱动：BUSY 低有效、30 秒超时、温度波形，以及黑白、局刷和四级灰度的完整两位数据流。两种屏幕均保留手写应用的灰度/抖动基准和空闲断电机制。SPI 使用半双工、保守的 10 MHz 时钟及原有独立 MISO 引脚。全零或全一的 ID 不能证明读线正常，必须分别在两种实机上确认识别。
+SSD2677 使用独立驱动：BUSY 低有效、30 秒超时、温度波形，以及黑白、局刷和四级灰度的完整两位数据流。两种屏幕均保留手写应用的灰度/抖动基准和空闲断电机制。SPI 使用 2 MHz 半双工三线模式，屏幕通过 GPIO14 的 SDA 双向读写，GPIO12 保留给 SD 卡 MISO；该时钟满足 SSD2677 读取上限 2.5 MHz。全零或全一的 ID 不能证明读线正常，必须分别在两种实机上确认识别。
 
 旧 SSD1677 驱动、竖屏方向、笔记/历史格式和分区表保持不变。升级前先保存；需要保留笔记时不要执行全片擦除，擦除 Flash 会清空笔记。
 

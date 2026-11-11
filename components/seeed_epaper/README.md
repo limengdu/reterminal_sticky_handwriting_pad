@@ -40,7 +40,8 @@
 
 ## Sticky 集成注意事项
 
-- SPI 设备必须支持接收；本项目使用独立 MISO 和 `SPI_DEVICE_HALFDUPLEX`。
+- SPI 设备使用 `SPI_DEVICE_HALFDUPLEX | SPI_DEVICE_3WIRE | SPI_DEVICE_NO_DUMMY`，通过 GPIO14 双向读写屏幕 SDA；GPIO12 供 SD 卡 MISO 使用。
+- 本项目统一使用 2 MHz 屏幕时钟，满足 SSD2677 读取时钟不高于 2.5 MHz 的要求。
 - 通过 `seeed_epaper_panel_get_model()` 获取实际型号。
 - SSD1677 BUSY 高有效；SSD2677 低有效、超时 30 秒。
 - SSD2677 局刷也会发送完整 96,000 字节的旧/新像素交织数据；小区域不代表小 SPI 传输。

@@ -8,11 +8,14 @@ ASAN_OPTIONS=detect_leaks=0 SANITIZE=1 tests/host/run.sh
 ```
 
 The runner uses host GCC/Clang, compiles the **actual** shared panel layer and
-SSD1677, SSD2677, UC8179 drivers, and deletes its temporary executable afterward.
+SSD1677, SSD2677, UC8179 drivers, and retains its executables in a temporary directory.
 No ESP-IDF checkout or panel hardware is required. The small stubs replace only
 ESP-IDF GPIO, SPI, time, semaphores and capability-based allocation.
 
 Tests capture command/data SPI traffic and check:
+
+- Board SPI configuration: GPIO14 bidirectional SDA, GPIO12 SD MISO,
+  half-duplex 3-wire mode without dummy cycles, and a 2 MHz clock.
 
 - AUTO ID 0x07 selection, 0x00/0xff/0x01 legacy fallback, read error propagation,
   explicit model selection without probing, and constructor cleanup.

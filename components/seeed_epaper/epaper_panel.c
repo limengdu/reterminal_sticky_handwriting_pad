@@ -1077,6 +1077,11 @@ esp_err_t seeed_epaper_new_panel(seeed_epaper_panel_model_t model,
             return err;
         }
         model = chip_id == 0x07U ? SEEED_EPAPER_PANEL_SSD2677 : SEEED_EPAPER_PANEL_SSD1677;
+        if (chip_id == 0x00U || chip_id == 0xFFU) {
+            ESP_LOGW(TAG,
+                     "panel probe: chip_id=0x%02X legacy fallback; verify SDA readback if panel stays busy",
+                     chip_id);
+        }
         panel->config.reset_low_ms = config->reset_low_ms ? config->reset_low_ms : 10;
         ESP_LOGI(TAG, "panel probe: chip_id=0x%02X controller=%s",
                               chip_id, select_driver(model)->name);
