@@ -21,6 +21,9 @@ typedef struct seeed_epaper_panel_t *seeed_epaper_panel_handle_t;
 typedef enum {
     SEEED_EPAPER_PANEL_UC8179 = 0,
     SEEED_EPAPER_PANEL_SSD1677,
+    SEEED_EPAPER_PANEL_SSD2677,
+    // Probe 0x70: ID 0x07 selects SSD2677; other IDs select SSD1677.
+    SEEED_EPAPER_PANEL_STICKY_AUTO,
 } seeed_epaper_panel_model_t;
 
 typedef enum {
@@ -89,6 +92,9 @@ esp_err_t seeed_epaper_panel_del(seeed_epaper_panel_handle_t panel);
 
 esp_err_t seeed_epaper_panel_get_info(seeed_epaper_panel_handle_t panel,
                                       seeed_epaper_panel_info_t *ret_info);
+
+esp_err_t seeed_epaper_panel_get_model(seeed_epaper_panel_handle_t panel,
+                                       seeed_epaper_panel_model_t *ret_model);
 
 esp_err_t seeed_epaper_panel_prepare(seeed_epaper_panel_handle_t panel,
                                      seeed_epaper_refresh_mode_t mode);

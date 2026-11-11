@@ -20,10 +20,20 @@ An offline, finger-operated handwriting notebook for Seeed Studio reTerminal Sti
 ## Hardware
 
 - reTerminal Sticky with ESP32-S3R8, 32 MB flash, and PSRAM.
-- SSD1677 e-paper display and GT911 touch controller.
+- SSD1677 or SSD2677 e-paper display and GT911 touch controller.
 - USB data cable for flashing and serial logs.
 
 The firmware runs locally on the device. A network connection, account, and external storage are not required.
+
+## Automatic display detection (v0.1.1)
+
+One firmware supports both Sticky screen revisions. At boot, the display driver resets the panel, sends command `0x70`, and selects SSD2677 for ID `0x07`; any other successful ID read selects the legacy SSD1677 path, matching the supplied Seeed reference. A failed SPI transaction stops initialization instead of silently choosing a controller. The serial log prints the detected controller.
+
+SSD2677 uses its own low-active BUSY signal, 30-second timeout, temperature-selected waveforms, and full-frame two-bit transfers for monochrome, partial, and four-gray refreshes. Both revisions retain the notebook's grayscale/dither baseline and idle power-off behavior. SPI is half-duplex at a conservative 10 MHz using the board's existing separate MISO pin. An all-zero/all-one ID cannot prove that read wiring works, so verify detection on each physical revision.
+
+The existing SSD1677 driver, portrait orientation, note/history formats, and partitions are unchanged. Save before upgrading and avoid a full-flash erase if keeping saved notes. Erasing flash deletes the notebook.
+
+The v0.1.0 hardware result below applies only to that original binary. Physical SSD1677 and SSD2677 validation of v0.1.1 is still pending. Follow the device checklist on each revision, including all four gray tones, unchanged gray pixels after a new stroke, corner/orientation markers, sleep/wake, and repeated flash/USB reconnect.
 
 ## Controls
 
@@ -58,6 +68,15 @@ pio device monitor -b 115200
 For additional logs, build or upload the `sticky-debug` environment.
 
 The partition table in `partitions.csv` allocates an 8 MB application partition, a 2 MB `notes` partition, and a 4 MB `history` partition.
+
+## Host regression checks
+
+```sh
+tests/host/run.sh
+ASAN_OPTIONS=detect_leaks=0 SANITIZE=1 tests/host/run.sh
+```
+
+These compile the actual panel layer and all three drivers with ESP-IDF hardware stubs and verify controller detection, complete SPI pixel streams, gray4/partial baselines, mirroring, power transitions, and error cleanup. They do not validate physical waveform quality or read wiring. See [test details](tests/host/README.md).
 
 ## Device verification
 

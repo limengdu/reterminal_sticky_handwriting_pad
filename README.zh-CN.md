@@ -2,7 +2,7 @@
 
 [English](README.md) | 简体中文
 
-手指在屏幕上划过即可书写，侧键翻页，AI 键单击休眠、长按打开清空确认框。基于 `sticky_demo_limengdu` 的板级驱动（SSD1677 电子纸、GT911 触摸、电源锁存）。
+手指在屏幕上划过即可书写，侧键翻页，AI 键单击休眠、长按打开清空确认框。基于 `sticky_demo_limengdu` 的板级驱动（SSD1677 / SSD2677 电子纸、GT911 触摸、电源锁存）。
 
 ![reTerminal Sticky 实机手写和浮动画笔工具栏](assets/preview.jpg)
 
@@ -27,7 +27,7 @@
 
 ## 编译与烧录
 
-硬件为 reTerminal Sticky（ESP32-S3R8、32 MB Flash、SSD1677 电子纸、GT911 触摸），竖屏使用，按键朝右。电脑需要安装 PlatformIO Core；平台版本由 `platformio.ini` 固定为 `espressif32@6.11.0`，组件版本记录在 `dependencies.lock` 中。
+硬件为 reTerminal Sticky（ESP32-S3R8、32 MB Flash、SSD1677 / SSD2677 电子纸、GT911 触摸），竖屏使用，按键朝右。电脑需要安装 PlatformIO Core；平台版本由 `platformio.ini` 固定为 `espressif32@6.11.0`，组件版本记录在 `dependencies.lock` 中。
 
 在项目根目录执行：
 
@@ -47,12 +47,31 @@ pio device monitor
 ## 实现要点
 
 - `src/input/sticky_touch.cpp`：10 ms 轮询 GT911，输出 Down/Move/Up 采样流，队列容量 1024，屏幕刷新期间不会丢点。GT911"数据未就绪"不再当作抬笔；短于 40 ms 的断触会被桥接成同一笔，单次 I2C 失败也不会断笔。
-- 局刷耗时：串口会打印 `display=refresh_partial convert_ms=… write_ms=… waveform_ms=…`。SPI 时钟为 20 MHz（`kSpiClockHz`），若出现花屏改回 10 MHz。
+- 局刷耗时：串口会打印 `display=refresh_partial convert_ms=… write_ms=… waveform_ms=…`。SPI 时钟为 10 MHz（`kSpiClockHz`），用于兼容两种控制器。
 - `src/handwrite/handwrite_app.cpp`：负责页面、工具栏、按键和触摸事件；画笔效果由 `handwrite_brush.cpp` 绘制。有新笔迹时局刷，页面切换和灰度显示使用全刷。每页在 PSRAM 中保留一份 2bpp 画布（约 94 KB/页）。
 - `src/board/pin_config.h` 定义侧键、AI 键、屏幕和触摸控制器的引脚。
 - 笔迹在进入睡眠时保存；断电前单击 AI 键，等月亮图标出现、设备进入睡眠后再断电。
 - `partitions.csv` 把参考工程的 `assets` 分区换成了 2 MB 的 `notes` 分区（页面按 2bpp 灰度原样保存，含画笔设置）和 4 MB 的 `history` 分区。
 - 撤销历史用只追加日志保存：每一步只写一次 Flash，入睡时只追加新步骤并更新一个小索引；日志写满时自动从头重写。记录带校验和与代次号，保存中途断电最多丢失撤销历史，不影响笔记。
+
+## v0.1.1 屏幕自动识别
+
+同一份固件兼容两种 Sticky 屏幕。启动时复位屏幕并发送 `0x70`：读到 `0x07` 选择 SSD2677，其余成功读出的值选择 SSD1677，与提供的 Seeed 参考代码一致。SPI 读取失败会直接报告初始化错误，不会当作旧屏处理。串口日志输出实际选择的控制器。
+
+SSD2677 使用独立驱动：BUSY 低有效、30 秒超时、温度波形，以及黑白、局刷和四级灰度的完整两位数据流。两种屏幕均保留手写应用的灰度/抖动基准和空闲断电机制。SPI 使用半双工、保守的 10 MHz 时钟及原有独立 MISO 引脚。全零或全一的 ID 不能证明读线正常，必须分别在两种实机上确认识别。
+
+旧 SSD1677 驱动、竖屏方向、笔记/历史格式和分区表保持不变。升级前先保存；需要保留笔记时不要执行全片擦除，擦除 Flash 会清空笔记。
+
+下方 v0.1.0 的真机验证仅适用于原始固件，不代表 v0.1.1 已验证。v0.1.1 在两种屏幕上的真机验证仍待完成。除以下步骤外，请检查四级灰度、新增笔迹后原灰色像素是否保留、四角方向、休眠唤醒、重复烧录及 USB 重连。
+
+## 主机回归测试
+
+```sh
+tests/host/run.sh
+ASAN_OPTIONS=detect_leaks=0 SANITIZE=1 tests/host/run.sh
+```
+
+测试直接编译实际屏幕公共层和三个驱动，以 ESP-IDF 硬件桩验证探测、完整 SPI 像素流、灰度/局刷基准、镜像、电源切换及错误清理。它不能验证实际波形质量或读线，详见 [测试说明](tests/host/README.md)。
 
 ## 真机验证步骤
 

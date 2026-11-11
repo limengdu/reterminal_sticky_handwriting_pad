@@ -12,6 +12,26 @@
 #define GPIO_NUM_NC ((gpio_num_t)-1)
 #endif
 
+typedef struct {
+    bool temperature_valid;
+    bool temperature_external;
+    uint8_t temperature_c;
+    uint32_t latch_ms;
+    uint32_t temperature_ms;
+    uint32_t latch_apply_ms;
+    uint32_t stream_ms;
+    uint32_t stream_command_ms;
+    uint32_t stream_encode_ms;
+    uint32_t stream_spi_ms;
+    uint32_t drive_ms;
+    uint32_t state_sync_ms;
+    uint32_t power_on_ms;
+    uint32_t power_on_settle_ms;
+    uint32_t refresh_ms;
+    uint32_t power_off_ms;
+    uint32_t power_off_settle_ms;
+} seeed_epaper_refresh_timing_t;
+
 typedef struct seeed_epaper_driver_t seeed_epaper_driver_t;
 
 typedef struct seeed_epaper_panel_t {
@@ -32,6 +52,15 @@ typedef struct seeed_epaper_panel_t {
     uint8_t *framebuffer;
     size_t framebuffer_stride;
     size_t framebuffer_len;
+    // SSD2677 streams previous/current pixels together at commit.
+    uint8_t *previous_framebuffer;
+    size_t previous_framebuffer_len;
+    uint8_t *gray4_framebuffer;
+    size_t gray4_framebuffer_len;
+    bool gray4_valid;
+    bool external_temperature_valid;
+    float external_temperature_c;
+    seeed_epaper_refresh_timing_t last_refresh_timing;
     uint8_t *spi_tx_buffer;
     size_t spi_tx_buffer_len;
     SemaphoreHandle_t busy_sem;
@@ -63,3 +92,6 @@ void seeed_epaper_panel_mirror_x(uint8_t *buffer, uint16_t width, uint16_t heigh
 
 const seeed_epaper_driver_t *seeed_epaper_uc8179_driver(void);
 const seeed_epaper_driver_t *seeed_epaper_ssd1677_driver(void);
+
+esp_err_t seeed_epaper_panel_read_data(seeed_epaper_panel_t *panel, uint8_t *data);
+const seeed_epaper_driver_t *seeed_epaper_ssd2677_driver(void);

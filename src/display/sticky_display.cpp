@@ -21,7 +21,7 @@ constexpr char kTag[] = "sticky_display";
 constexpr size_t kFramebufferStride = kStickyDisplayWidth / 4U;
 constexpr size_t kFramebufferSize = kFramebufferStride * kStickyDisplayHeight;
 constexpr size_t kMonochromeStride = kStickyDisplayWidth / 8U;
-constexpr int kSpiClockHz = 20 * 1000 * 1000;
+constexpr int kSpiClockHz = 10 * 1000 * 1000;
 
 seeed_epaper_panel_handle_t s_panel = nullptr;
 spi_device_handle_t s_spi_device = nullptr;
@@ -119,6 +119,7 @@ esp_err_t sticky_display_init()
     app_log_register_tag(kTag);
     app_log_register_tag("seeed_epaper");
     app_log_register_tag("ssd1677");
+    app_log_register_tag("ssd2677");
 
     if (s_panel != nullptr && s_canvas != nullptr) {
         STICKY_LOGD(kTag, "display=init state=already_ready");
@@ -171,9 +172,9 @@ esp_err_t sticky_display_init()
                 PIN_EPD_CLK);
 
     spi_device_interface_config_t device_config = {};
-    // SSD1677 accepts writes up to 20 MHz (50 ns cycle); doubling the
-    // reference 10 MHz halves the ~77 ms transfer of each partial refresh.
-    // SSD1677写入时钟最高20MHz；相比参考工程的10MHz，局刷传输时间减半。
+    // Conservative clock for both revisions; RX-only probe/temperature reads
+    // require half-duplex mode with the existing separate MISO pin.
+    device_config.flags = SPI_DEVICE_HALFDUPLEX;
     device_config.clock_speed_hz = kSpiClockHz;
     device_config.mode = 0;
     device_config.spics_io_num = PIN_EPD_CS;
@@ -198,10 +199,13 @@ esp_err_t sticky_display_init()
     panel_config.enable_level = 1;
     panel_config.mirror_x = true;
     ESP_RETURN_ON_ERROR(
-        seeed_epaper_new_panel(SEEED_EPAPER_PANEL_SSD1677, &panel_config, &s_panel),
-        "sticky_display", "create SSD1677 panel");
+        seeed_epaper_new_panel(SEEED_EPAPER_PANEL_STICKY_AUTO, &panel_config, &s_panel),
+        "sticky_display", "detect Sticky panel");
+    seeed_epaper_panel_model_t detected_model;
+    ESP_RETURN_ON_ERROR(seeed_epaper_panel_get_model(s_panel, &detected_model), kTag, "get panel model");
     STICKY_LOGI(kTag,
-                "display=panel_ready controller=SSD1677 dc=%d rst=%d busy=%d result=ok",
+                "display=panel_ready controller=%s dc=%d rst=%d busy=%d result=ok",
+                detected_model == SEEED_EPAPER_PANEL_SSD2677 ? "SSD2677" : "SSD1677",
                 PIN_EPD_DC,
                 PIN_EPD_RST,
                 PIN_EPD_BUSY);
