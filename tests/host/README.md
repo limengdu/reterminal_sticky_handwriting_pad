@@ -12,6 +12,8 @@ SSD1677, SSD2677, UC8179 drivers, and retains its executables in a temporary dir
 No ESP-IDF checkout or panel hardware is required. The small stubs replace only
 ESP-IDF GPIO, SPI, time, semaphores and capability-based allocation.
 
+The runner first checks that the runtime firmware version and ESP-IDF image descriptor agree. Update `platformio.ini` and `CMakeLists.txt` together for a new release.
+
 Tests capture command/data SPI traffic and check:
 
 - Board SPI configuration: GPIO14 bidirectional SDA, GPIO12 SD MISO,

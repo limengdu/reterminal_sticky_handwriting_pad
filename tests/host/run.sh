@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 cd "$(dirname "$0")/../.."
+python3 tools/check_firmware_version.py
 build=$(mktemp -d)
 ${CC:-cc} -std=c11 -g -O1 ${SANITIZE:+-fsanitize=address,undefined -fno-omit-frame-pointer} \
   -Itests/host/stubs -Icomponents/seeed_epaper \
